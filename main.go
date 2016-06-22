@@ -16,6 +16,31 @@ func Connect(amqpURI string) (ch *amqp.Connection) {
 	}
 }
 
+func declareExchange(ch *amqp.Channel, exchange string) error {
+	err := ch.ExchangeDeclare(
+		exchange, // name
+		"topic",  // type
+		true,     // durable
+		false,    // auto-deleted
+		false,    // internal
+		false,    // noWait
+		nil,      // arguments
+	)
+	return err
+}
+
+func declareQueue(ch *amqp.Channel, queue string) (q amqp.Queue, err error) {
+	q, err := ch.QueueDeclare(
+		queue, // name
+		true,  // durable
+		false, // delete when unused
+		false, // exclusive
+		false, // no-wait
+		nil,   // arguments
+	)
+	return q, err
+}
+
 func Consume(conn *amqp.Connection, exchange, queue, consumerTag string) (chan string, error) {
 
 	data := make(chan string)
@@ -29,28 +54,13 @@ func Consume(conn *amqp.Connection, exchange, queue, consumerTag string) (chan s
 		log.Printf("Got Channel")
 		defer ch.Close()
 
-		err := ch.ExchangeDeclare(
-			exchange, // name
-			"topic",  // type
-			true,     // durable
-			false,    // auto-deleted
-			false,    // internal
-			false,    // noWait
-			nil,      // arguments
-		)
+		err := declareExchange(ch, exchange)
 		if err != nil {
 			log.Printf("ERROR: Could not declare Exchange [%s] %q", exchange, err)
 			return nil, err
 		} else {
 
-			q, err := ch.QueueDeclare(
-				queue, // name
-				true,  // durable
-				false, // delete when unused
-				false, // exclusive
-				false, // no-wait
-				nil,   // arguments
-			)
+			q, err := declareQueue(ch, queue)
 			if err != nil {
 				log.Printf("ERROR: Could not declare queue [%s] %q", queue, err)
 				return nil, err
