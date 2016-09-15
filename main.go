@@ -1,4 +1,4 @@
-package robimq
+package conejo
 
 import (
 	"github.com/streadway/amqp"
@@ -30,7 +30,7 @@ func declareExchange(ch *amqp.Channel, exchange string) error {
 }
 
 func declareQueue(ch *amqp.Channel, queue string) (q amqp.Queue, err error) {
-	q, err := ch.QueueDeclare(
+	q, err = ch.QueueDeclare(
 		queue, // name
 		true,  // durable
 		false, // delete when unused
