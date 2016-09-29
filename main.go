@@ -26,31 +26,6 @@ func Connect(amqpURI string) (conn *amqp.Connection) {
 	}
 }
 
-func declareExchange(exchange string) error {
-	err := ch.ExchangeDeclare(
-		exchange, // name
-		"topic",  // type
-		true,     // durable
-		false,    // auto-deleted
-		false,    // internal
-		false,    // noWait
-		nil,      // arguments
-	)
-	return err
-}
-
-func declareQueue(queue string) (q amqp.Queue, err error) {
-	q, err = ch.QueueDeclare(
-		queue, // name
-		true,  // durable
-		false, // delete when unused
-		false, // exclusive
-		false, // no-wait
-		nil,   // arguments
-	)
-	return q, err
-}
-
 func confirmOne(confirms <-chan amqp.Confirmation) {
 	log.Printf("waiting for confirmation of one publishing")
 	if confirmed := <-confirms; confirmed.Ack {
