@@ -50,7 +50,7 @@ func Publish(conn *amqp.Connection, queue, exchangeName string) {
 		Arguments:   nil,
 	}
 
-	err := _declareExchange(c)
+	err := declareExchange(c)
 	if err != nil {
 		log.Printf("ERROR: Could not declare exchange %q", err)
 	} else {
@@ -107,9 +107,18 @@ func Publish(conn *amqp.Connection, queue, exchangeName string) {
 	}
 }
 
-func Consume(conn *amqp.Connection, exchange, queue, consumerTag string) (chan string, error) {
+func Consume(conn *amqp.Connection, exchangeName, queue, consumerTag string) (chan string, error) {
 
 	data := make(chan string)
+	c := exchange{
+		Name:        exchangeName,
+		Type:        "topic",
+		Durable:     true,
+		AutoDeleted: false,
+		Internal:    false,
+		NoWait:      false,
+		Arguments:   nil,
+	}
 
 	ch, err := conn.Channel()
 	if err != nil {
@@ -120,9 +129,9 @@ func Consume(conn *amqp.Connection, exchange, queue, consumerTag string) (chan s
 		log.Printf("Got Channel")
 		defer ch.Close()
 
-		err := declareExchange(exchange)
+		err := declareExchange(c)
 		if err != nil {
-			log.Printf("ERROR: Could not declare Exchange [%s] %q", exchange, err)
+			log.Printf("ERROR: Could not declare Exchange [%s] %q", exchangeName, err)
 			return nil, err
 		} else {
 
@@ -133,14 +142,14 @@ func Consume(conn *amqp.Connection, exchange, queue, consumerTag string) (chan s
 			} else {
 
 				err = ch.QueueBind(
-					q.Name,   // queue name
-					"image",  // routing key @TODO
-					exchange, // exchange
+					q.Name,       // queue name
+					"image",      // routing key @TODO
+					exchangeName, // exchange
 					false,
 					nil,
 				)
 				if err != nil {
-					log.Printf("ERROR: Could not bind [%s] queue to [%s] exhange %q", queue, exchange, err)
+					log.Printf("ERROR: Could not bind [%s] queue to [%s] exhange %q", queue, exchangeName, err)
 					return nil, err
 				} else {
 
