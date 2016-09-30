@@ -35,12 +35,22 @@ func confirmOne(confirms <-chan amqp.Confirmation) {
 	}
 }
 
-func Publish(conn *amqp.Connection, queue, exchange string) {
+func Publish(conn *amqp.Connection, queue, exchangeName string) {
 
 	var reliable = true
 	var body = "DSDH HJD SHDJ DHJKLD HASJDKL HJKLDSA"
 
-	err := declareExchange(exchange)
+	c := exchange{
+		Name:        exchangeName,
+		Type:        "topic",
+		Durable:     true,
+		AutoDeleted: false,
+		Internal:    false,
+		NoWait:      false,
+		Arguments:   nil,
+	}
+
+	err := _declareExchange(c)
 	if err != nil {
 		log.Printf("ERROR: Could not declare exchange %q", err)
 	} else {
@@ -53,12 +63,12 @@ func Publish(conn *amqp.Connection, queue, exchange string) {
 			err = ch.QueueBind(
 				q.Name, // queue name
 				queue,
-				exchange, // exchange
+				exchangeName, // exchange
 				false,
 				nil,
 			)
 			if err != nil {
-				log.Printf("ERROR: Could not bind queue '%s' to exchange '%s' using '%s'", queue, exchange, queue, err)
+				log.Printf("ERROR: Could not bind queue '%s' to exchange '%s' using '%s'", queue, exchangeName, queue, err)
 			} else {
 
 				// Reliable publisher confirms require confirm.select support from to connection.
@@ -73,10 +83,10 @@ func Publish(conn *amqp.Connection, queue, exchange string) {
 				}
 
 				if err = ch.Publish(
-					exchange, // publish to an exchange
-					q.Name,   // routing to 0 or more queues
-					false,    // mandatory
-					false,    // immediate
+					exchangeName, // publish to an exchange
+					q.Name,       // routing to 0 or more queues
+					false,        // mandatory
+					false,        // immediate
 					amqp.Publishing{
 						Headers:         amqp.Table{},
 						ContentType:     "text/plain",
