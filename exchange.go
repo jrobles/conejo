@@ -14,19 +14,6 @@ type exchange struct {
 	Arguments   amqp.Table
 }
 
-func _declareExchange(exchange string) error {
-	err := ch.ExchangeDeclare(
-		exchange, // name
-		"topic",  // type
-		true,     // durable
-		false,    // auto-deleted
-		false,    // internal
-		false,    // noWait
-		nil,      // arguments
-	)
-	return err
-}
-
 func declareExchange(e exchange) error {
 	err := ch.ExchangeDeclare(
 		e.Name,        // name

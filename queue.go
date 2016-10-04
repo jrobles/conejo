@@ -4,14 +4,23 @@ import (
 	"github.com/streadway/amqp"
 )
 
-func declareQueue(queue string) (q amqp.Queue, err error) {
-	q, err = ch.QueueDeclare(
-		queue, // name
-		true,  // durable
-		false, // delete when unused
-		false, // exclusive
-		false, // no-wait
-		nil,   // arguments
+type queue struct {
+	Name      string
+	Durable   bool
+	Delete    bool
+	Exclusive bool
+	NoWait    bool
+	Arguments amqp.Table
+}
+
+func declareQueue(q queue) (aq amqp.Queue, err error) {
+	aq, err = ch.QueueDeclare(
+		q.Name,      // name
+		q.Durable,   // durable
+		q.Delete,    // delete when unused
+		q.Exclusive, // exclusive
+		q.NoWait,    // no-wait
+		q.Arguments, // arguments
 	)
-	return q, err
+	return aq, err
 }
