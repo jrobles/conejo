@@ -35,12 +35,12 @@ func confirmOne(confirms <-chan amqp.Confirmation) {
 	}
 }
 
-func Publish(conn *amqp.Connection, queue, exchangeName string) {
+func Publish(conn *amqp.Connection, queue Queue, exchangeName string) {
 
 	var reliable = true
 	var body = "DSDH HJD SHDJ DHJKLD HASJDKL HJKLDSA"
 
-	c := exchange{
+	c := Exchange{
 		Name:        exchangeName,
 		Type:        "topic",
 		Durable:     true,
@@ -61,8 +61,8 @@ func Publish(conn *amqp.Connection, queue, exchangeName string) {
 		} else {
 			log.Printf("[CONEJO] Declared queue")
 			err = ch.QueueBind(
-				q.Name, // queue name
-				queue,
+				q.Name,       // queue name
+				queue.Name,   // @TODO - FIX ME!!!
 				exchangeName, // exchange
 				false,
 				nil,
@@ -107,10 +107,10 @@ func Publish(conn *amqp.Connection, queue, exchangeName string) {
 	}
 }
 
-func Consume(conn *amqp.Connection, exchangeName, queue, consumerTag string) (chan string, error) {
+func Consume(conn *amqp.Connection, exchangeName string, queue Queue, consumerTag string) (chan string, error) {
 
 	data := make(chan string)
-	c := exchange{
+	c := Exchange{
 		Name:        exchangeName,
 		Type:        "topic",
 		Durable:     true,
@@ -137,7 +137,7 @@ func Consume(conn *amqp.Connection, exchangeName, queue, consumerTag string) (ch
 
 			q, err := declareQueue(queue)
 			if err != nil {
-				log.Printf("ERROR: Could not declare queue [%s] %q", queue, err)
+				log.Printf("ERROR: Could not declare queue [%s] %q", queue.Name, err)
 				return nil, err
 			} else {
 

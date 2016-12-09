@@ -4,7 +4,7 @@ import (
 	"github.com/streadway/amqp"
 )
 
-type queue struct {
+type Queue struct {
 	Name      string
 	Durable   bool
 	Delete    bool
@@ -13,7 +13,7 @@ type queue struct {
 	Arguments amqp.Table
 }
 
-func declareQueue(q queue) (aq amqp.Queue, err error) {
+func declareQueue(q Queue) (aq amqp.Queue, err error) {
 	aq, err = ch.QueueDeclare(
 		q.Name,      // name
 		q.Durable,   // durable

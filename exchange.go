@@ -4,7 +4,7 @@ import (
 	"github.com/streadway/amqp"
 )
 
-type exchange struct {
+type Exchange struct {
 	Name        string
 	Type        string
 	Durable     bool
@@ -14,7 +14,7 @@ type exchange struct {
 	Arguments   amqp.Table
 }
 
-func declareExchange(e exchange) error {
+func declareExchange(e Exchange) error {
 	err := ch.ExchangeDeclare(
 		e.Name,        // name
 		e.Type,        // type
