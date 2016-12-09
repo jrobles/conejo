@@ -12,13 +12,13 @@ var (
 func Connect(amqpURI string) (conn *amqp.Connection) {
 	conn, err := amqp.Dial(amqpURI)
 	if err != nil {
-		log.Printf("ERROR: Could not connect to RabbitMQ server - %q", err)
+		log.Printf("[CONEJO] Could not connect to RabbitMQ server - %q", err)
 		return nil
 	} else {
 		log.Printf("[CONEJO] Connected to RabbitMQ server - %s", amqpURI)
 		ch, err = conn.Channel()
 		if err != nil {
-			log.Printf("ERROR: Could not declare channel %q", err)
+			log.Printf("[CONEJO] Could not declare channel %q", err)
 			return nil
 		} else {
 			return conn
@@ -35,18 +35,18 @@ func confirmOne(confirms <-chan amqp.Confirmation) {
 	}
 }
 
-func Publish(conn *amqp.Connection, queue Queue, exchangeName string) {
+func Publish(conn *amqp.Connection, queue Queue, exchange Exchange) {
 
 	var reliable = true
 	var body = "DSDH HJD SHDJ DHJKLD HASJDKL HJKLDSA"
 
 	c := Exchange{
-		Name:        exchangeName,
-		Type:        "topic",
-		Durable:     true,
-		AutoDeleted: false,
-		Internal:    false,
-		NoWait:      false,
+		Name:        exchange.Name,
+		Type:        exchange.Type,
+		Durable:     exchange.Durable,
+		AutoDeleted: exchange.AutoDeleted,
+		Internal:    exchange.Internal,
+		NoWait:      exchange.NoWait,
 		Arguments:   nil,
 	}
 
@@ -61,14 +61,14 @@ func Publish(conn *amqp.Connection, queue Queue, exchangeName string) {
 		} else {
 			log.Printf("[CONEJO] Declared queue")
 			err = ch.QueueBind(
-				q.Name,       // queue name
-				queue.Name,   // @TODO - FIX ME!!!
-				exchangeName, // exchange
+				queue.Name,    // queue name
+				queue.Name,    // @TODO - FIX ME!!!
+				exchange.Name, // exchange
 				false,
 				nil,
 			)
 			if err != nil {
-				log.Printf("ERROR: Could not bind queue '%s' to exchange '%s' using '%s'", queue, exchangeName, queue, err)
+				log.Printf("ERROR: Could not bind queue '%s' to exchange '%s' using '%s' - ", queue.Name, exchange.Name, queue.Name, err)
 			} else {
 
 				// Reliable publisher confirms require confirm.select support from to connection.
@@ -83,10 +83,10 @@ func Publish(conn *amqp.Connection, queue Queue, exchangeName string) {
 				}
 
 				if err = ch.Publish(
-					exchangeName, // publish to an exchange
-					q.Name,       // routing to 0 or more queues
-					false,        // mandatory
-					false,        // immediate
+					exchange.Name, // publish to an exchange
+					q.Name,        // routing to 0 or more queues
+					false,         // mandatory
+					false,         // immediate
 					amqp.Publishing{
 						Headers:         amqp.Table{},
 						ContentType:     "text/plain",
