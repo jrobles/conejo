@@ -16,23 +16,14 @@ func Connect(amqpURI string) (conn *amqp.Connection) {
 	}
 }
 
-func confirmOne(confirms <-chan amqp.Confirmation) {
-	log.Printf("waiting for confirmation of one publishing")
-	if confirmed := <-confirms; confirmed.Ack {
-		log.Printf("confirmed delivery with delivery tag: %d", confirmed.DeliveryTag)
-	} else {
-		log.Printf("failed delivery of delivery tag: %d", confirmed.DeliveryTag)
-	}
-}
-
 func Publish(conn *amqp.Connection, queue Queue, exchange Exchange, body string) {
 
 	ch, err := conn.Channel()
 	if err != nil {
 		log.Printf("[CONEJO] Could not declare channel %q", err)
 	}
-
-	var reliable = true
+	ch.Confirm(false)
+	ack, nack := ch.NotifyConfirm(make(chan uint64, 1), make(chan uint64, 1))
 
 	err = declareExchange(exchange, ch)
 	if err != nil {
@@ -55,17 +46,6 @@ func Publish(conn *amqp.Connection, queue Queue, exchange Exchange, body string)
 				log.Printf("ERROR: Could not bind queue '%s' to exchange '%s' using '%s' - ", queue.Name, exchange.Name, queue.Name, err)
 			} else {
 
-				// Reliable publisher confirms require confirm.select support from to connection.
-				if reliable {
-					if err := ch.Confirm(false); err != nil {
-						log.Printf("ERROR: Could not confirm - %s", err)
-					}
-
-					confirms := ch.NotifyPublish(make(chan amqp.Confirmation, 1))
-
-					defer confirmOne(confirms)
-				}
-
 				if err = ch.Publish(
 					exchange.Name, // publish to an exchange
 					q.Name,        // routing to 0 or more queues
@@ -78,12 +58,16 @@ func Publish(conn *amqp.Connection, queue Queue, exchange Exchange, body string)
 						Body:            []byte(body),
 						DeliveryMode:    amqp.Transient, // 1=non-persistent, 2=persistent
 						Priority:        0,              // 0-9
-						// a bunch of application/implementation-specific fields
 					},
 				); err != nil {
 					log.Printf("ERROR: Could not publish message %s", err)
 				} else {
-					//ch.Close()
+					select {
+					case tag := <-ack:
+						log.Println("Acked ", tag)
+					case tag := <-nack:
+						log.Println("Nack alert! ", tag)
+					}
 					defer ch.Close()
 				}
 
