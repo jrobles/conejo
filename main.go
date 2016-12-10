@@ -5,10 +5,6 @@ import (
 	"log"
 )
 
-var (
-	ch *amqp.Channel
-)
-
 func Connect(amqpURI string) (conn *amqp.Connection) {
 	conn, err := amqp.Dial(amqpURI)
 	if err != nil {
@@ -16,13 +12,7 @@ func Connect(amqpURI string) (conn *amqp.Connection) {
 		return nil
 	} else {
 		log.Printf("[CONEJO] Connected to RabbitMQ server - %s", amqpURI)
-		ch, err = conn.Channel()
-		if err != nil {
-			log.Printf("[CONEJO] Could not declare channel %q", err)
-			return nil
-		} else {
-			return conn
-		}
+		return conn
 	}
 }
 
@@ -35,27 +25,21 @@ func confirmOne(confirms <-chan amqp.Confirmation) {
 	}
 }
 
-func Publish(conn *amqp.Connection, queue Queue, exchange Exchange) {
+func Publish(conn *amqp.Connection, queue Queue, exchange Exchange, body string) {
 
-	var reliable = true
-	var body = "DSDH HJD SHDJ DHJKLD HASJDKL HJKLDSA"
-
-	c := Exchange{
-		Name:        exchange.Name,
-		Type:        exchange.Type,
-		Durable:     exchange.Durable,
-		AutoDeleted: exchange.AutoDeleted,
-		Internal:    exchange.Internal,
-		NoWait:      exchange.NoWait,
-		Arguments:   nil,
+	ch, err := conn.Channel()
+	if err != nil {
+		log.Printf("[CONEJO] Could not declare channel %q", err)
 	}
 
-	err := declareExchange(c)
+	var reliable = true
+
+	err = declareExchange(exchange, ch)
 	if err != nil {
 		log.Printf("ERROR: Could not declare exchange %q", err)
 	} else {
 		log.Printf("[CONEJO] Declared exchange")
-		q, err := declareQueue(queue)
+		q, err := declareQueue(queue, ch)
 		if err != nil {
 			log.Printf("ERROR: Could not declare queue %q", err)
 		} else {
@@ -99,7 +83,8 @@ func Publish(conn *amqp.Connection, queue Queue, exchange Exchange) {
 				); err != nil {
 					log.Printf("ERROR: Could not publish message %s", err)
 				} else {
-					ch.Close()
+					//ch.Close()
+					defer ch.Close()
 				}
 
 			}
@@ -107,6 +92,7 @@ func Publish(conn *amqp.Connection, queue Queue, exchange Exchange) {
 	}
 }
 
+/*
 func Consume(conn *amqp.Connection, exchangeName string, queue Queue, consumerTag string) (chan string, error) {
 
 	data := make(chan string)
@@ -198,3 +184,4 @@ func Consume(conn *amqp.Connection, exchangeName string, queue Queue, consumerTa
 	}
 	return data, nil
 }
+*/

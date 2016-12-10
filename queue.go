@@ -13,7 +13,7 @@ type Queue struct {
 	Arguments amqp.Table
 }
 
-func declareQueue(q Queue) (aq amqp.Queue, err error) {
+func declareQueue(q Queue, ch *amqp.Channel) (aq amqp.Queue, err error) {
 	aq, err = ch.QueueDeclare(
 		q.Name,      // name
 		q.Durable,   // durable
