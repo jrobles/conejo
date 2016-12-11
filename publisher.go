@@ -19,7 +19,7 @@ func Publish(conn *amqp.Connection, queue Queue, exchange Exchange, body string)
 		log.Printf("ERROR: Could not declare exchange %q", err)
 	} else {
 		log.Printf("[CONEJO] Declared exchange")
-		q, err := declareQueue(queue, ch)
+		_, err := declareQueue(queue, ch)
 		if err != nil {
 			log.Printf("ERROR: Could not declare queue %q", err)
 		} else {
@@ -37,7 +37,7 @@ func Publish(conn *amqp.Connection, queue Queue, exchange Exchange, body string)
 
 				if err = ch.Publish(
 					exchange.Name, // publish to an exchange
-					q.Name,        // routing to 0 or more queues
+					queue.Name,    // routing to 0 or more queues
 					false,         // mandatory
 					false,         // immediate
 					amqp.Publishing{
