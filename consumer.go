@@ -7,25 +7,25 @@ import (
 
 func Consume(conn *amqp.Connection, queue Queue, exchange Exchange, consumerTag string, cb chan string) error {
 
-	ch, err := conn.Channel()
+	channel, err := conn.Channel()
 	if err != nil {
 		log.Printf("[CONEJO] Could not declare channel %q", err)
 	}
-	defer ch.Close()
+	defer channel.Close()
 
-	err = declareExchange(exchange, ch)
+	err = declareExchange(exchange, channel)
 	if err != nil {
 		log.Printf("ERROR: Could not declare Exchange [%s] %q", exchange.Name, err)
 		return err
 	} else {
 
-		_, err = declareQueue(queue, ch)
+		err = declareQueue(queue, channel)
 		if err != nil {
 			log.Printf("ERROR: Could not declare queue [%s] %q", queue.Name, err)
 			return err
 		} else {
 
-			err = ch.QueueBind(
+			err = channel.QueueBind(
 				queue.Name,    // queue name
 				queue.Name,    // routing key @TODO
 				exchange.Name, // exchange
@@ -38,7 +38,7 @@ func Consume(conn *amqp.Connection, queue Queue, exchange Exchange, consumerTag 
 			} else {
 
 				log.Printf("Queue %s declared", queue.Name)
-				err = ch.Qos(
+				err = channel.Qos(
 					1,     // prefetch count
 					0,     // prefetch size
 					false, // global
@@ -47,7 +47,8 @@ func Consume(conn *amqp.Connection, queue Queue, exchange Exchange, consumerTag 
 					log.Printf("ERROR: %q", err)
 					return err
 				}
-				msgs, err := ch.Consume(
+
+				msgs, err := channel.Consume(
 					queue.Name,  // queue
 					consumerTag, // consumer
 					false,       // auto-ack
@@ -62,7 +63,6 @@ func Consume(conn *amqp.Connection, queue Queue, exchange Exchange, consumerTag 
 				}
 
 				forever := make(chan bool)
-
 				go func() {
 					for d := range msgs {
 						d.Ack(false)
@@ -72,9 +72,10 @@ func Consume(conn *amqp.Connection, queue Queue, exchange Exchange, consumerTag 
 				log.Printf("Consumer tag %s", consumerTag)
 				<-forever
 				return nil
-			}
 
-		}
+			} // Bound to queue
+
+		} // Queue declared
 
 	}
 	return nil

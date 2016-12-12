@@ -13,14 +13,14 @@ type Queue struct {
 	Arguments amqp.Table
 }
 
-func declareQueue(q Queue, ch *amqp.Channel) (aq amqp.Queue, err error) {
-	aq, err = ch.QueueDeclare(
-		q.Name,      // name
-		q.Durable,   // durable
-		q.Delete,    // delete when unused
-		q.Exclusive, // exclusive
-		q.NoWait,    // no-wait
-		q.Arguments, // arguments
+func declareQueue(queue Queue, channel *amqp.Channel) error {
+	_, err := channel.QueueDeclare(
+		queue.Name,      // name
+		queue.Durable,   // durable
+		queue.Delete,    // delete when unused
+		queue.Exclusive, // exclusive
+		queue.NoWait,    // no-wait
+		queue.Arguments, // arguments
 	)
-	return aq, err
+	return err
 }

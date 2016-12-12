@@ -14,15 +14,15 @@ type Exchange struct {
 	Arguments   amqp.Table
 }
 
-func declareExchange(e Exchange, ch *amqp.Channel) error {
-	err := ch.ExchangeDeclare(
-		e.Name,        // name
-		e.Type,        // type
-		e.Durable,     // durable
-		e.AutoDeleted, // auto-deleted
-		e.Internal,    // internal
-		e.NoWait,      // noWait
-		e.Arguments,   // arguments
+func declareExchange(exchange Exchange, channel *amqp.Channel) error {
+	err := channel.ExchangeDeclare(
+		exchange.Name,        // name
+		exchange.Type,        // type
+		exchange.Durable,     // durable
+		exchange.AutoDeleted, // auto-deleted
+		exchange.Internal,    // internal
+		exchange.NoWait,      // noWait
+		exchange.Arguments,   // arguments
 	)
 	return err
 }
