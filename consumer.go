@@ -5,9 +5,7 @@ import (
 	"log"
 )
 
-func Consume(conn *amqp.Connection, queue Queue, exchange Exchange, consumerTag string, cb chan string) (chan string, error) {
-
-	data := make(chan string)
+func Consume(conn *amqp.Connection, queue Queue, exchange Exchange, consumerTag string, cb chan string) error {
 
 	ch, err := conn.Channel()
 	if err != nil {
@@ -18,13 +16,13 @@ func Consume(conn *amqp.Connection, queue Queue, exchange Exchange, consumerTag 
 	err = declareExchange(exchange, ch)
 	if err != nil {
 		log.Printf("ERROR: Could not declare Exchange [%s] %q", exchange.Name, err)
-		return nil, err
+		return err
 	} else {
 
 		_, err = declareQueue(queue, ch)
 		if err != nil {
 			log.Printf("ERROR: Could not declare queue [%s] %q", queue.Name, err)
-			return nil, err
+			return err
 		} else {
 
 			err = ch.QueueBind(
@@ -36,7 +34,7 @@ func Consume(conn *amqp.Connection, queue Queue, exchange Exchange, consumerTag 
 			)
 			if err != nil {
 				log.Printf("ERROR: Could not bind [%s] queue to [%s] exhange %q", queue.Name, exchange.Name, err)
-				return nil, err
+				return err
 			} else {
 
 				log.Printf("Queue %s declared", queue.Name)
@@ -47,7 +45,7 @@ func Consume(conn *amqp.Connection, queue Queue, exchange Exchange, consumerTag 
 				)
 				if err != nil {
 					log.Printf("ERROR: %q", err)
-					return nil, err
+					return err
 				}
 				msgs, err := ch.Consume(
 					queue.Name,  // queue
@@ -60,7 +58,7 @@ func Consume(conn *amqp.Connection, queue Queue, exchange Exchange, consumerTag 
 				)
 				if err != nil {
 					log.Printf("ERROR: Could not consume messages on [%s] queue %q", queue.Name, err)
-					return nil, err
+					return err
 				}
 
 				forever := make(chan bool)
@@ -68,16 +66,16 @@ func Consume(conn *amqp.Connection, queue Queue, exchange Exchange, consumerTag 
 				go func() {
 					for d := range msgs {
 						d.Ack(false)
-						data <- string(d.Body)
+						cb <- string(d.Body)
 					}
 				}()
 				log.Printf("Consumer tag %s", consumerTag)
 				<-forever
-				return data, nil
+				return nil
 			}
 
 		}
 
 	}
-	return data, nil
+	return nil
 }
