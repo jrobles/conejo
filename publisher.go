@@ -5,23 +5,24 @@ import (
 	"log"
 )
 
-func Publish(conn *amqp.Connection, queue Queue, exchange Exchange, body string) {
+func Publish(conn *amqp.Connection, queue Queue, exchange Exchange, body string) error {
 
-	channel, err := conn.Channel()
+	channel, err := createChannel(conn)
 	if err != nil {
-		log.Printf("[CONEJO] Could not declare channel %q", err)
+		return err
 	}
 	channel.Confirm(false)
 	ack, nack := channel.NotifyConfirm(make(chan uint64, 1), make(chan uint64, 1))
+	defer channel.Close()
 
 	err = declareExchange(exchange, channel)
 	if err != nil {
-		log.Printf("ERROR: Could not declare exchange %q", err)
+		return err
 	} else {
 
 		err := declareQueue(queue, channel)
 		if err != nil {
-			log.Printf("ERROR: Could not declare queue %q", err)
+			return err
 		} else {
 
 			err = channel.QueueBind(
@@ -32,7 +33,7 @@ func Publish(conn *amqp.Connection, queue Queue, exchange Exchange, body string)
 				nil,
 			)
 			if err != nil {
-				log.Printf("ERROR: Could not bind queue '%s' to exchange '%s' using '%s' - ", queue.Name, exchange.Name, queue.Name, err)
+				return err
 			} else {
 
 				if err = channel.Publish(
@@ -49,7 +50,7 @@ func Publish(conn *amqp.Connection, queue Queue, exchange Exchange, body string)
 						Priority:        0,              // 0-9
 					},
 				); err != nil {
-					log.Printf("ERROR: Could not publish message %s", err)
+					return err
 				} else {
 
 					select {
@@ -60,8 +61,8 @@ func Publish(conn *amqp.Connection, queue Queue, exchange Exchange, body string)
 					}
 					defer channel.Close()
 				}
-
 			}
 		}
 	}
+	return nil
 }
