@@ -48,3 +48,7 @@ func main() {
   }
 }
 ```
+### TODO
+- tests
+- documentation
+- cleanup
