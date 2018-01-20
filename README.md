@@ -2,7 +2,20 @@
 
 Golang lib for RabbitMQ Connecting, Consuming, and Publishing. Needs a great deal of refining, but it's quick & dirty and gets the job done for my current project. WIll definitely refactor in the near future.
 
+## Status
 
+Currently on hold. I use this lib for several personal projects so all should be working as intended. 
+
+## Goals
+
+* [ ] Unit Tests
+  * [ ] main.go
+  * [ ] channel.go
+  * [ ] producer.go
+  * [ ] queue.go
+  * [ ] exchange.go
+
+## Usage
 
 ### Sample Producer
 ```go
@@ -49,7 +62,3 @@ func main() {
   }
 }
 ```
-### TODO
-- tests
-- documentation
-- cleanup
