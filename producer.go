@@ -1,8 +1,9 @@
 package conejo
 
 import (
-	"errors"
+	//"errors"
 	"github.com/streadway/amqp"
+	"log"
 )
 
 func Publish(conn *amqp.Connection, queue Queue, exchange Exchange, body string) error {
@@ -12,7 +13,7 @@ func Publish(conn *amqp.Connection, queue Queue, exchange Exchange, body string)
 		return err
 	}
 	channel.Confirm(false)
-	ack, nack := channel.NotifyConfirm(make(chan uint64, 1), make(chan uint64, 1))
+	//ack, nack := channel.NotifyConfirm(make(chan uint64, 1), make(chan uint64, 1))
 
 	err = declareExchange(exchange, channel)
 	if err != nil {
@@ -51,18 +52,11 @@ func Publish(conn *amqp.Connection, queue Queue, exchange Exchange, body string)
 				); err != nil {
 					return err
 				} else {
-
-					select {
-					case <-ack:
-						return nil
-					case <-nack:
-						err = errors.New("Message not acknowledged")
-						return err
-					}
+					log.Println("CONEJO: Channel closed")
+					channel.Close()
 				}
 			}
 		}
 	}
-	defer channel.Close()
 	return nil
 }
