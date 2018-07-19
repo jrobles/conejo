@@ -24,7 +24,7 @@ func createChannel(conn *amqp.Connection) (*amqp.Channel, error) {
 	} else {
 
 		// All is well
-		log.Println("CONEJO: Channel created")
+		log.Printf("CONEJO: Channel created")
 		return channel, nil
 	}
 }
