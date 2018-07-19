@@ -59,10 +59,10 @@ func Publish(conn *amqp.Connection, queue Queue, exchange Exchange, body string)
 						err = errors.New("Message not acknowledged")
 						return err
 					}
-					defer channel.Close()
 				}
 			}
 		}
 	}
+	defer channel.Close()
 	return nil
 }
