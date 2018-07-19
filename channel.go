@@ -28,3 +28,9 @@ func createChannel(conn *amqp.Connection) (*amqp.Channel, error) {
 		return channel, nil
 	}
 }
+
+func CloseChannel(channel *amqp.Channel) {
+
+	channel.Close()
+
+}
